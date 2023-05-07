@@ -4,9 +4,11 @@ node {
 		sh 'ls -lha'
 		sh 'docker run --rm -v "${PWD}/sources" python:2-alpine python -m py_compile add2vals.py'
 	}
- 	  if (env.BRANCH_NAME == 'master') {
+ 	  else if (env.BRANCH_NAME == 'develop') {
 		sh 'ls -lha'
 		sh 'docker run --rm -v "${PWD}/sources" python:2-alpine python -m py_compile calc.py'
-	}
-  }
+	} else {
+                        error "BRANCH TIDAK DIKETAHUI"
+                    }
+      }
 }
