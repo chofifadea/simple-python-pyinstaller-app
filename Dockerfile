@@ -1,7 +1,10 @@
 FROM python:2-alpine
 
-RUN cd ~/sources; \
-    python -m py_compile add2vals.py; \
-    python -m py_compile calc.py; \
+WORKDIR /app
 
+ENV PYTHONUNBUFFERED 1
+
+COPY . /app
+
+RUN python -m py_compile /app/sources/add2vals.py /app/sources/calc.py 
 
