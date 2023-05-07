@@ -22,7 +22,10 @@ stages {
                     image 'docker:20.10.12-dind'
                     args '-v /var/run/docker.sock:/var/run/docker.sock -u 0 -e AWS_DEFAULT_OUTPUT=json -e AWS_REGION=ap-southeats-1'
                 }
-            }        
+            }
+	      environment {
+                AWS_CRED = credentials('cobamfa-aws-credential')
+            }
             steps {
                 script {
                     sh 'mv devops/.aws /root'
