@@ -1,14 +1,42 @@
-node {
-      stage ('Build'){
-	  if (env.BRANCH_NAME == 'master') {
-		sh 'ls -lha'
-		sh 'docker run --rm -v "${PWD}/sources" python:2-alpine python -m py_compile add2vals.py'
-	}
- 	  else if (env.BRANCH_NAME == 'develop') {
-		sh 'ls -lha'
-		sh 'docker run --rm -v "${PWD}/sources" python:2-alpine python -m py_compile calc.py'
-	} else {
-                        error "BRANCH TIDAK DIKETAHUI"
-                    }
-      }
+pipeline {
+    agent none
+stages {
+      stage('Build Image') { 
+            agent {
+                docker {
+                    image 'docker:20.10.12-dind'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -u root'
+                }
+            }  
+            steps {
+                script {
+                    sh 'ls -lha /var/run/'
+                    sh 'ls -lha'
+                    sh 'docker build -t test .'
+                }              
+           }          
+        }
+      stage('Push Image') {      
+            agent {
+                docker {
+                    image 'docker:20.10.12-dind'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock -u 0 -e AWS_DEFAULT_OUTPUT=json -e AWS_REGION=ap-southeats-1'
+                }
+            }        
+            steps {
+                script {
+                    sh 'mv devops/.aws /root'
+                    sh 'apk add --no-cache curl jq python3 py3-pip'
+                    sh 'pip install awscli'
+                    sh 'echo $AWS_CRED | base64 -di > ~/.aws/credentials'
+                    sh 'aws ecr get-login-password --region ap-southeast-1 | docker login --username AWS --password-stdin 429914618741.dkr.ecr.ap-southeast-1.amazonaws.com'
+                    sh 'docker images'
+		    sh 'docker tag test:latest 429914618741.dkr.ecr.ap-southeast-1.amazonaws.com/test:python-dicoding'
+                    sh 'docker push 429914618741.dkr.ecr.ap-southeast-1.amazonaws.com/test:python-dicoding'
+                    sh 'docker rmi 429914618741.dkr.ecr.ap-southeast-1.amazonaws.com/test:python-dicoding'
+                    sh 'docker logout 429914618741.dkr.ecr.ap-southeast-1.amazonaws.com'
+                }
+            }
+        }      
+    }
 }
